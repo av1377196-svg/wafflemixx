@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaffleMix - Experiencia Interactiva</title>
+    <style>
+        :root {
+            --brand-primary: #D6627E;
+            --brand-secondary: #7D3C27;
+            --brand-accent-pastel: #FCD2D9;
+            --neutral-bg-main: #FFF9F4;
+            --neutral-bg-card: #FFFFFF;
+            --neutral-text-dark: #2E1A16;
+            --neutral-text-muted: #6B5B56;
+            --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 15px 30px rgba(214, 98, 126, 0.15);
+            --font-display: 'Georgia', serif;
+            --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--neutral-bg-main);
+            color: var(--neutral-text-dark);
+            line-height: 1.6;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .hidden { display: none !important; }
+
+        /* Botones */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 14px 32px; border-radius: 50px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; text-decoration: none; border: none; font-size: 15px;
+            width: 100%; max-width: 280px; margin: 5px auto;
+        }
+        .btn-primary { background-color: var(--brand-primary); color: white; box-shadow: var(--shadow-sm); }
+        .btn-primary:hover { background-color: #C54F6B; transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .btn-outline { background: transparent; border: 2px solid var(--brand-primary); color: var(--brand-primary); }
+        .btn-outline:hover { background: var(--brand-primary); color: white; }
+
+        /* Botón Flotante Volver */
+        #btn-back {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background-color: var(--brand-secondary); color: white; border: none;
+            padding: 12px 24px; border-radius: 50px; font-weight: bold; font-size: 14px;
+            box-shadow: 0 8px 15px rgba(125, 60, 39, 0.3); cursor: pointer; z-index: 10000;
+            transition: all 0.3s; width: 85%; text-align: center;
+        }
+        #btn-back:hover { background-color: var(--brand-primary); }
+
+        /* Navegación Superior */
+        header {
+            padding: 15px 0; background-color: #FFFFFF; position: sticky; top: 0; z-index: 9999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .nav-container { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .logo { font-family: var(--font-display); font-size: 26px; font-weight: 900; color: var(--neutral-text-dark); text-decoration: none; }
+        .logo span { color: var(--brand-primary); }
+        .nav-menu { display: flex; gap: 12px; list-style: none; flex-wrap: wrap; justify-content: center; }
+        .nav-link {
+            color: var(--neutral-text-muted); text-decoration: none; font-weight: 600;
+            font-size: 13px; cursor: pointer; padding: 4px 0; border-bottom: 2px solid transparent; transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active { color: var(--brand-primary); border-bottom-color: var(--brand-primary); }
+
+        /* Estructura de Páginas */
+        .page { padding-bottom: 100px; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .section-header { text-align: center; margin: 35px 0 20px 0; padding: 0 10px; }
+        .section-header h2 { font-family: var(--font-display); font-size: 32px; margin-bottom: 8px; }
+
+        /* Grillas y Tarjetas */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 10px; }
+        .card { background: var(--neutral-bg-card); border-radius: 20px; padding: 25px; box-shadow: var(--shadow-sm); text-align: center; }
+        .card-img { width: 100%; height: 200px; border-radius: 14px; margin-bottom: 15px; background-size: cover; background-position: center; }
+
+        /* Arma tu Waffle */
+        .build-container { display: grid; grid-template-columns: 1fr; gap: 20px; background: white; padding: 20px; border-radius: 24px; box-shadow: var(--shadow-sm); margin-top: 15px; }
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .option-item { background: var(--neutral-bg-main); padding: 12px; border-radius: 12px; text-align: center; cursor: pointer; border: 2px solid transparent; user-select: none; transition: all 0.2s; font-size: 14px; }
+        .option-item.selected { background: var(--brand-accent-pastel); border-color: var(--brand-primary); font-weight: bold; }
+        
+        .live-receipt { background: var(--neutral-bg-main); padding: 20px; border-radius: 16px; border: 2px dashed var(--brand-secondary); }
+        .receipt-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; border-bottom: 1px dashed rgba(0,0,0,0.05); padding-bottom: 4px; }
+        .total-box { display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; color: var(--brand-secondary); border-top: 2px solid var(--brand-secondary); padding-top: 10px; margin-top: 10px; }
+
+        /* Elementos de Fidelidad */
+        .loyalty-card { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+        .stamp-circle { width: 65px; height: 65px; border-radius: 50%; border: 3px dashed var(--brand-accent-pastel); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--brand-accent-pastel); background: white; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .stamp-circle.stamped { background: var(--brand-primary); border-color: var(--brand-primary); color: white; }
+
+        footer { background: var(--brand-secondary); color: white; text-align: center; padding: 30px 0; margin-top: 40px; font-size: 14px; }
+
+        @media (min-width: 768px) {
+            .nav-container { flex-direction: row; justify-content: space-between; }
+            .build-container { grid-template-columns: 2fr 1fr; gap: 30px; }
+            #btn-back { width: auto; left: 30px; bottom: 30px; transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="btn-back" class="hidden nav-trigger" data-target="home">⬅ Volver al Inicio</button>
+
+    <header>
+        <div class="container nav-container">
+            <a href="#!" class="logo nav-trigger" data-target="home">Waffle<span>Mix.</span></a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#!" class="nav-link active nav-trigger" data-target="home">Inicio</a></li>
+                    <li><a href="#!" class="nav-link nav-trigger" data-target="menu">Carta</a></li>
+                    <li><a href="#!" class="nav-link nav-trigger" data-target="build">Arma tu Waffle</a></li>
+                    <li><a href="#!" class="nav-link nav-trigger" data-target="events">Eventos</a></li>
+                    <li><a href="#!" class="nav-link nav-trigger" data-target="interact">Comunidad</a></li>
+                    <li><a href="#!" class="nav-link nav-trigger" data-target="club">Waffle Club</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="page-home" class="page">
+        <section class="container" style="text-align: center; padding: 40px 0;">
+            <h1 style="font-family: var(--font-display); font-size: 38px; margin-bottom: 15px;">El waffle perfecto se come <span>caliente.</span></h1>
+            <p style="font-size: 15px; color: var(--neutral-text-muted); max-width: 600px; margin: 0 auto 30px auto;">Olvídate del delivery. La magia ocurre directo en nuestras planchas de hierro.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 35px;">
+                <button class="btn btn-primary nav-trigger" data-target="history">Nuestra Historia</button>
+                <button class="btn btn-outline nav-trigger" data-target="locations">Nuestras Sedes</button>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-menu" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Clásicos de la Casa</h2>
+                <p>Nuestras combinaciones estrella preparadas al instante.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card">
+                    <h3 style="margin-bottom: 5px;">Choco Lovers</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 13px; margin-bottom: 12px;">Nutella, fresas, perlas de chocolate bitter y crema montada.</p>
+                    <div style="font-weight: bold; font-size: 20px; color: var(--brand-primary);">S/ 18.00</div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 5px;">Berry Dream</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 13px; margin-bottom: 12px;">Arándanos, miel de maple orgánica y helado de vainilla.</p>
+                    <div style="font-weight: bold; font-size: 20px; color: var(--brand-primary);">S/ 16.50</div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom: 5px;">Clásico Americano</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 13px; margin-bottom: 12px;">Waffle dorado con mantequilla de campo y jarabe clásico.</p>
+                    <div style="font-weight: bold; font-size: 20px; color: var(--brand-primary);">S/ 14.00</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- SECCIÓN DE EVENTOS -->
+    <main id="page-events" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Próximos Eventos 📅</h2>
+                <p>Únete a nuestras actividades y promociones especiales.</p>
+            </div>
+            <div class="grid-3">
+                <div class="card" style="border-left: 4px solid var(--brand-primary); text-align: left;">
+                    <h3 style="color: var(--brand-secondary);">Viernes de 2x1</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 14px; margin: 8px 0;">Todos los viernes, trae a un amigo y llévate el segundo waffle (clásico americano) totalmente gratis.</p>
+                    <p style="font-weight: bold; font-size: 13px;">🗓️ Todos los viernes del mes</p>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--brand-primary); text-align: left;">
+                    <h3 style="color: var(--brand-secondary);">Taller: Arma tu Waffle</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 14px; margin: 8px 0;">Aprende con nuestros maestros a preparar la masa perfecta en nuestras planchas de hierro. ¡Cupos limitados!</p>
+                    <p style="font-weight: bold; font-size: 13px;">🗓️ Sábado 15, 4:00 PM</p>
+                </div>
+                <div class="card" style="border-left: 4px solid var(--brand-primary); text-align: left;">
+                    <h3 style="color: var(--brand-secondary);">Noche de Waffles y Juegos</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 14px; margin: 8px 0;">Juegos de mesa disponibles en todas las mesas. Si ganas una partida de Jenga, tu bebida es cortesía de la casa.</p>
+                    <p style="font-weight: bold; font-size: 13px;">🗓️ Jueves 20, 7:00 PM</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-history" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Nuestra Historia 👩‍🍳✨</h2>
+            </div>
+            <div class="grid-3">
+                <div class="card" style="border-top: 4px solid var(--brand-primary);">
+                    <span style="font-size: 45px;">💡</span>
+                    <h3>La Idea</h3>
+                    <p style="color: var(--neutral-text-muted); font-size: 13px; margin-top: 8px;">Estábamos cansados de los waffles aguados por culpa del delivery tradicional.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-locations" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Nuestras Sedes 📍</h2>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; padding: 0 10px;">
+                <div class="card" style="border: 2px solid var(--brand-accent-pastel); width: 100%; max-width: 450px; text-align: left;">
+                    <h3 style="color: var(--brand-secondary); margin-bottom: 8px;">🏢 Sede Independencia</h3>
+                    <p style="font-weight: 600; font-size: 14px;">📍 Av. Carlos Izaguirre 245</p>
+                    <hr style="margin: 12px 0; border: 0; border-top: 1px dashed var(--brand-accent-pastel);">
+                    <p style="font-size: 12px; font-weight: bold; color: var(--brand-primary);">Horario:</p>
+                    <p style="font-size: 12px; color: var(--neutral-text-muted);">Lunes a Domingo: 9:00 AM - 10:00 PM</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-build" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Diseña tu Waffle</h2>
+            </div>
+            <div class="build-container">
+                <div>
+                    <h3 style="margin-bottom: 12px; font-size: 16px;">1. Elige el Tamaño Base</h3>
+                    <div class="options-grid">
+                        <div class="option-item size-btn selected" data-name="Tamaño Personal" data-price="10.00">Personal (S/10)</div>
+                        <div class="option-item size-btn" data-name="Tamaño Mediano" data-price="14.00">Mediano (S/14)</div>
+                    </div>
+
+                    <h3 style="margin-bottom: 12px; font-size: 16px;">2. Tipo de Masa</h3>
+                    <div class="options-grid">
+                        <div class="option-item dough-btn selected" data-name="Masa Clásica" data-price="0.00">Clásica (+S/0)</div>
+                        <div class="option-item dough-btn" data-name="Masa de Chocolate" data-price="2.00">Chocolate (+S/2)</div>
+                    </div>
+
+                    <h3 style="margin-bottom: 12px; font-size: 16px;">3. Toppings (+S/ 2.00 c/u)</h3>
+                    <div class="options-grid">
+                        <div class="option-item topping-btn" data-name="Fresas" data-price="2.00">Fresas</div>
+                        <div class="option-item topping-btn" data-name="Nutella" data-price="2.00">Nutella</div>
+                    </div>
+                </div>
+
+                <div class="live-receipt">
+                    <h3 style="text-align: center; margin-bottom: 15px; font-family: var(--font-display);">Tu Ticket</h3>
+                    <div id="receipt-list"></div>
+                    <div class="total-box">
+                        <span>Total:</span>
+                        <span id="live-total">S/ 10.00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-interact" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Comunidad WaffleMix</h2>
+            </div>
+            <div class="grid-3" id="photo-grid">
+                <div class="card">
+                    <!-- Imagen de cafeteria intacta -->
+                    <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80');"></div>
+                    <p style="font-weight: bold; color: var(--brand-secondary);">@WaffleFan99</p>
+                </div>
+                <div class="card">
+                    <!-- Imagen de postre waffle intacta -->
+                    <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&w=600&q=80');"></div>
+                    <p style="font-weight: bold; color: var(--brand-secondary);">@DulceLocura</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <main id="page-club" class="page hidden">
+        <section class="container">
+            <div class="section-header">
+                <h2>Waffle Club 👑</h2>
+            </div>
+            <div style="max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 24px; box-shadow: var(--shadow-lg); text-align: center;">
+                <div class="loyalty-card">
+                    <div class="stamp-circle">1</div>
+                    <div class="stamp-circle">2</div>
+                    <div class="stamp-circle">3</div>
+                    <div class="stamp-circle">4</div>
+                    <div class="stamp-circle" style="border-color:var(--brand-primary);">🎁</div>
+                </div>
+                <div id="club-reward-msg" class="hidden" style="background:var(--brand-primary); color:white; padding:12px; border-radius:12px; font-weight:bold;">
+                    ¡Excelente! 🎉 Muestra este código en caja para tu premio.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><strong>WaffleMix © 2026</strong> - Maestros del Waffle Caliente</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navTriggers = document.querySelectorAll('.nav-trigger');
+            const pages = document.querySelectorAll('.page');
+            const btnBack = document.getElementById('btn-back');
+
+            navTriggers.forEach(trigger => {
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = trigger.getAttribute('data-target');
+                    
+                    pages.forEach(p => p.classList.add('hidden'));
+                    document.getElementById('page-' + targetId).classList.remove('hidden');
+                    
+                    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                    const matchingNav = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+                    if(matchingNav) matchingNav.classList.add('active');
+
+                    if (targetId === 'home') {
+                        btnBack.classList.add('hidden');
+                    } else {
+                        btnBack.classList.remove('hidden');
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            });
+
+            /* CALCULADORA */
+            const sizeBtns = document.querySelectorAll('.size-btn');
+            const doughBtns = document.querySelectorAll('.dough-btn');
+            const toppingBtns = document.querySelectorAll('.topping-btn');
+            const receiptList = document.getElementById('receipt-list');
+            const liveTotal = document.getElementById('live-total');
+            
+            let currentSize = { name: "Tamaño Personal", price: 10.00 };
+            let currentDough = { name: "Masa Clásica", price: 0.00 };
+            let currentToppings = [];
+
+            function renderReceipt() {
+                let total = currentSize.price + currentDough.price;
+                receiptList.innerHTML = `<div class="receipt-item"><span>${currentSize.name}</span><span>S/ ${currentSize.price.toFixed(2)}</span></div>`;
+                if(currentDough.price > 0) {
+                    receiptList.innerHTML += `<div class="receipt-item"><span>+ ${currentDough.name}</span><span>S/ ${currentDough.price.toFixed(2)}</span></div>`;
+                }
+                currentToppings.forEach(t => {
+                    total += t.price;
+                    receiptList.innerHTML += `<div class="receipt-item"><span>+ ${t.name}</span><span>S/ ${t.price.toFixed(2)}</span></div>`;
+                });
+                liveTotal.innerText = `S/ ${total.toFixed(2)}`;
+            }
+
+            sizeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sizeBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    currentSize = { name: btn.getAttribute('data-name'), price: parseFloat(btn.getAttribute('data-price')) };
+                    renderReceipt();
+                });
+            });
+
+            doughBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    doughBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    currentDough = { name: btn.getAttribute('data-name'), price: parseFloat(btn.getAttribute('data-price')) };
+                    renderReceipt();
+                });
+            });
+
+            toppingBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const name = btn.getAttribute('data-name');
+                    const price = parseFloat(btn.getAttribute('data-price'));
+                    
+                    if (btn.classList.contains('selected')) {
+                        btn.classList.remove('selected');
+                        const index = currentToppings.findIndex(t => t.name === name);
+                        if (index > -1) currentToppings.splice(index, 1);
+                    } else {
+                        btn.classList.add('selected');
+                        currentToppings.push({ name, price });
+                    }
+                    renderReceipt();
+                });
+            });
+            renderReceipt();
+
+            /* SELLOS */
+            const stampCircles = document.querySelectorAll('.stamp-circle');
+            let count = 0;
+            stampCircles.forEach(circle => {
+                circle.addEventListener('click', function() {
+                    if(!this.classList.contains('stamped')) {
+                        this.classList.add('stamped');
+                        this.innerHTML = '✔';
+                        count++;
+                        if(count === 5) document.getElementById('club-reward-msg').classList.remove('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
